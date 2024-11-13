@@ -11,6 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+/* -- END LICENSE BLOCK ------------------------------------------------
+ *
+ * Separated domain into RxPDO and TxPDO.
+ *
+ * Copyright 2024 HIWIN Technologies Corp.
+ *
+ */
 
 #include "ethercat_interface/ec_master.hpp"
 #include "ethercat_interface/ec_slave.hpp"
@@ -258,20 +266,27 @@ bool EcMaster::activate()
   return true;
 }
 
-void EcMaster::update(uint32_t domain)
+void EcMaster::update()
 {
   // receive process data
   ecrt_master_receive(master_);
 
-  DomainInfo * domain_info = domain_info_.at(domain);
-  if (domain_info == NULL) {
-    throw std::runtime_error("Null domain info: " + std::to_string(domain));
+  DomainInfo * rx_domain_info = domain_info_.at(RXPDO_DOMAIN);
+  if (rx_domain_info == NULL) {
+    throw std::runtime_error("Null domain info: " + std::to_string(RXPDO_DOMAIN));
   }
 
-  ecrt_domain_process(domain_info->domain);
+  DomainInfo * tx_domain_info = domain_info_.at(TXPDO_DOMAIN);
+  if (tx_domain_info == NULL) {
+    throw std::runtime_error("Null domain info: " + std::to_string(TXPDO_DOMAIN));
+  }
+
+  ecrt_domain_process(rx_domain_info->domain);
+  ecrt_domain_process(tx_domain_info->domain);
 
   // check process data state (optional)
-  checkDomainState(domain);
+  checkDomainState(RXPDO_DOMAIN);
+  checkDomainState(TXPDO_DOMAIN);
 
   // check for master and slave state change
   if (update_counter_ % check_state_frequency_ == 0) {
@@ -280,9 +295,14 @@ void EcMaster::update(uint32_t domain)
   }
 
   // read and write process data
-  for (DomainInfo::Entry & entry : domain_info->entries) {
+  for (DomainInfo::Entry & entry : tx_domain_info->entries) {
     for (int i = 0; i < entry.num_pdos; ++i) {
-      (entry.slave)->processData(i, domain_info->domain_pd + entry.offset[i]);
+      (entry.slave)->txProcessData(i, tx_domain_info->domain_pd + entry.offset[i]);
+    }
+  }
+  for (DomainInfo::Entry & entry : rx_domain_info->entries) {
+    for (int i = 0; i < entry.num_pdos; ++i) {
+      (entry.slave)->rxProcessData(i, rx_domain_info->domain_pd + entry.offset[i]);
     }
   }
 
@@ -294,26 +314,34 @@ void EcMaster::update(uint32_t domain)
   ecrt_master_sync_slave_clocks(master_);
 
   // send process data
-  ecrt_domain_queue(domain_info->domain);
+  ecrt_domain_queue(rx_domain_info->domain);
+  ecrt_domain_queue(tx_domain_info->domain);
   ecrt_master_send(master_);
 
   ++update_counter_;
 }
 
-void EcMaster::readData(uint32_t domain)
+void EcMaster::readData()
 {
   // receive process data
   ecrt_master_receive(master_);
 
-  DomainInfo * domain_info = domain_info_.at(domain);
-  if (domain_info == NULL) {
-    throw std::runtime_error("Null domain info: " + std::to_string(domain));
+  DomainInfo * rx_domain_info = domain_info_.at(RXPDO_DOMAIN);
+  if (rx_domain_info == NULL) {
+    throw std::runtime_error("Null domain info: " + std::to_string(RXPDO_DOMAIN));
   }
 
-  ecrt_domain_process(domain_info->domain);
+  DomainInfo * tx_domain_info = domain_info_.at(TXPDO_DOMAIN);
+  if (tx_domain_info == NULL) {
+    throw std::runtime_error("Null domain info: " + std::to_string(TXPDO_DOMAIN));
+  }
+
+  ecrt_domain_process(rx_domain_info->domain);
+  ecrt_domain_process(tx_domain_info->domain);
 
   // check process data state (optional)
-  checkDomainState(domain);
+  checkDomainState(RXPDO_DOMAIN);
+  checkDomainState(TXPDO_DOMAIN);
 
   // check for master and slave state change
   if (update_counter_ % check_state_frequency_ == 0) {
@@ -322,26 +350,31 @@ void EcMaster::readData(uint32_t domain)
   }
 
   // read and write process data
-  for (DomainInfo::Entry & entry : domain_info->entries) {
+  for (DomainInfo::Entry & entry : tx_domain_info->entries) {
     for (int i = 0; i < entry.num_pdos; ++i) {
-      (entry.slave)->processData(i, domain_info->domain_pd + entry.offset[i]);
+      (entry.slave)->txProcessData(i, tx_domain_info->domain_pd + entry.offset[i]);
     }
   }
 
   ++update_counter_;
 }
 
-void EcMaster::writeData(uint32_t domain)
+void EcMaster::writeData()
 {
-  DomainInfo * domain_info = domain_info_.at(domain);
-  if (domain_info == NULL) {
-    throw std::runtime_error("Null domain info: " + std::to_string(domain));
+  DomainInfo * rx_domain_info = domain_info_.at(RXPDO_DOMAIN);
+  if (rx_domain_info == NULL) {
+    throw std::runtime_error("Null domain info: " + std::to_string(RXPDO_DOMAIN));
+  }
+
+  DomainInfo * tx_domain_info = domain_info_.at(TXPDO_DOMAIN);
+  if (tx_domain_info == NULL) {
+    throw std::runtime_error("Null domain info: " + std::to_string(TXPDO_DOMAIN));
   }
 
   // read and write process data
-  for (DomainInfo::Entry & entry : domain_info->entries) {
+  for (DomainInfo::Entry & entry : rx_domain_info->entries) {
     for (int i = 0; i < entry.num_pdos; ++i) {
-      (entry.slave)->processData(i, domain_info->domain_pd + entry.offset[i]);
+      (entry.slave)->rxProcessData(i, rx_domain_info->domain_pd + entry.offset[i]);
     }
   }
 
@@ -353,7 +386,8 @@ void EcMaster::writeData(uint32_t domain)
   ecrt_master_sync_slave_clocks(master_);
 
   // send process data
-  ecrt_domain_queue(domain_info->domain);
+  ecrt_domain_queue(rx_domain_info->domain);
+  ecrt_domain_queue(tx_domain_info->domain);
   ecrt_master_send(master_);
 }
 

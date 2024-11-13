@@ -11,6 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+/* -- END LICENSE BLOCK ------------------------------------------------
+ *
+ * Separated domain into RxPDO and TxPDO.
+ *
+ * Copyright 2024 HIWIN Technologies Corp.
+ *
+ */
+
 
 #ifndef ETHERCAT_INTERFACE__EC_MASTER_HPP_
 #define ETHERCAT_INTERFACE__EC_MASTER_HPP_
@@ -49,7 +58,7 @@ public:
   bool activate();
 
   /** perform one EtherCAT cycle, passing the domain to the slaves */
-  virtual void update(uint32_t domain = 0);
+  virtual void update();
 
   /** run a control loop of update() and user_callback(), blocking.
    *  call activate and setThreadHighPriority/RealTime first. */
@@ -87,8 +96,8 @@ public:
 
   uint32_t getInterval() {return interval_;}
 
-  void readData(uint32_t domain = 0);
-  void writeData(uint32_t domain = 0);
+  void readData();
+  void writeData();
 
 private:
   /** true if running */

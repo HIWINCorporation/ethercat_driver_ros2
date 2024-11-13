@@ -11,6 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+/* -- END LICENSE BLOCK ------------------------------------------------
+ *
+ * Separated domain into RxPDO and TxPDO.
+ *
+ * Copyright 2024 HIWIN Technologies Corp.
+ *
+ */
+
 
 #ifndef ETHERCAT_INTERFACE__EC_SLAVE_HPP_
 #define ETHERCAT_INTERFACE__EC_SLAVE_HPP_
@@ -28,6 +37,8 @@
 namespace ethercat_interface
 {
 
+#define RXPDO_DOMAIN 0
+#define TXPDO_DOMAIN 1
 class EcSlave
 {
 public:
@@ -37,6 +48,8 @@ public:
   virtual ~EcSlave() {}
   /** read or write data to the domain */
   virtual void processData(size_t /*index*/, uint8_t * /*domain_address*/) {}
+  virtual void rxProcessData(size_t /*index*/, uint8_t * /*domain_address*/) {}
+  virtual void txProcessData(size_t /*index*/, uint8_t * /*domain_address*/) {}
   /** a pointer to syncs. return &syncs[0] */
   virtual const ec_sync_info_t * syncs() {return NULL;}
   virtual bool initialized() {return true;}
@@ -66,6 +79,7 @@ public:
 
   std::vector<SdoConfigEntry> sdo_config;
 
+  virtual void registerMDPModule(unsigned int index, EcSlave* slave) {}
 protected:
   std::vector<double> * state_interface_ptr_;
   std::vector<double> * command_interface_ptr_;

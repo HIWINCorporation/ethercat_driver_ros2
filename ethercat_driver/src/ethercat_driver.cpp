@@ -284,7 +284,24 @@ CallbackReturn EthercatDriver::on_activate(
 
   master_.setCtrlFrequency(control_frequency_);
 
+  std::map<uint, uint> mdp_device_map;
   for (auto i = 0ul; i < ec_modules_.size(); i++) {
+    uint position = std::stod(ec_module_parameters_[i]["position"]);
+    if (ec_module_parameters_[i].at("plugin") == "ethercat_generic_plugins/EcMDPDevice") {
+      if (mdp_device_map.find(position) == mdp_device_map.end()) {
+        mdp_device_map.insert({position, i});
+      } else {
+        return CallbackReturn::ERROR;  // Slave on same position.
+      }
+    } else if (ec_module_parameters_[i].at("plugin") == "ethercat_generic_plugins/EcMDPModule"){
+      if (mdp_device_map.find(position) != mdp_device_map.end()) {
+        auto axis_num = std::stod(ec_module_parameters_[i]["axis"]) - 1;
+        ec_modules_[mdp_device_map[position]]->registerMDPModule(axis_num, ec_modules_[i].get());
+      }else{
+        return CallbackReturn::ERROR; // MDP device not found.
+      }
+      continue;
+    }
     master_.addSlave(
       std::stod(ec_module_parameters_[i]["alias"]),
       std::stod(ec_module_parameters_[i]["position"]),

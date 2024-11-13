@@ -1,0 +1,10 @@
+<library path="ethercat_generic_mdp">
+  <class name="ethercat_generic_plugins/EcMDPDevice" type="ethercat_generic_plugins::EcMDPDevice"
+    base_class_type="ethercat_interface::EcSlave">
+    <description>EtherCAT Modular Device Profile.</description>
+  </class>
+  <class name="ethercat_generic_plugins/EcMDPModule" type="ethercat_generic_plugins::EcMDPModule"
+    base_class_type="ethercat_interface::EcSlave">
+    <description>EtherCAT Modular Device Profile.</description>
+  </class>
+</library>
