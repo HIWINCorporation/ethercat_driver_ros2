@@ -25,8 +25,6 @@ EcCiA402Drive::EcCiA402Drive()
 : GenericEcSlave() {}
 EcCiA402Drive::~EcCiA402Drive() {}
 
-bool EcCiA402Drive::initialized() const {return initialized_;}
-
 void EcCiA402Drive::processData(size_t index, uint8_t * domain_address)
 {
   // Special case: ControlWord
