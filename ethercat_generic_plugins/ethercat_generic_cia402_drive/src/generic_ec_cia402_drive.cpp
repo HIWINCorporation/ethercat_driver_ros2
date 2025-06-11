@@ -95,13 +95,11 @@ void EcCiA402Drive::processData(size_t index, uint8_t * domain_address)
                   << " with status word :" << status_word_ << std::endl;
       }
     }
-    initialized_ = ((state_ == STATE_OPERATION_ENABLED) &&
-      (last_state_ == STATE_OPERATION_ENABLED)) ? true : false;
-
+    initialized_ = is_operational_;
     last_status_word_ = status_word_;
     last_state_ = state_;
     counter_++;
-  }
+  }  
 }
 
 bool EcCiA402Drive::setupSlave(

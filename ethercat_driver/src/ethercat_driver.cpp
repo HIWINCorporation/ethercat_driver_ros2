@@ -329,7 +329,7 @@ CallbackReturn EthercatDriver::on_activate(
     // update EtherCAT bus
 
     master_.update();
-    RCLCPP_INFO(rclcpp::get_logger("EthercatDriver"), "updated!");
+    RCLCPP_DEBUG(rclcpp::get_logger("EthercatDriver"), "updated!");
 
     // check if operational
     bool isAllInit = true;
